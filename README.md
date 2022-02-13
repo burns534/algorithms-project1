@@ -3,7 +3,7 @@
 ### General Task List
 
 - [x] Basic I/O
-- [ ] Key generation function
+- [x] Key generation function
 - [ ] Encryption function
 - [ ] Decryption function
 - [ ] Tie into I/O

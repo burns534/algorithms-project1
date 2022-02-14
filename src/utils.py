@@ -1,7 +1,7 @@
 import math
 import random;
 def eratosthenes():
-    n = random.randint(100, 5000)
+    n = random.randint(1, 1000)
     prime = [True for i in range(n + 1)]
     p = 2
     while (p * p <= n):
@@ -61,3 +61,9 @@ def get_encryption_key(n, r):
 
 def get_decryption_key (e, r):
     return mult_inv(e,r)
+
+def stringToAscii(text):
+    ascii_values = []
+    for character in text:
+        ascii_values.append("{}".format(ord(character)))
+    return ascii_values

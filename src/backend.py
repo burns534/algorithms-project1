@@ -6,9 +6,17 @@ signature_queue = []
 
 # TODO
 def encrypt(message: str, pub: int) -> str:
+    (e, n) = pub
+    cipher_values = []
+    ascii_values = utils.stringToAscii(message)
+    for c in ascii_values:
+        m = int(c)
+        cipher_value = pow(m,e) % n
+        cipher_values.append(cipher_value)
     return message
-# TODO
+# TODO 
 def decrypt(message: str, priv: int) -> str:
+    (d, n) = priv
     return message
 
 def generate_rsa_pair():
@@ -36,10 +44,3 @@ def get_message(index: int) -> str:
         return message_queue[index]
     return None
 
-
-def authenticate_signature(index: int) -> str:
-    # pop signature queue
-    return "There are no signatures to authenticate."
-
-# def get_signatures() -> list(str):
-#     ["{}. {}".format(i, m) for i, m in enumerate(signature_queue)]

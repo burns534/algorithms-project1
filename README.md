@@ -4,6 +4,7 @@
 
 - [x] Basic I/O
 - [x] Key generation function
-- [ ] Encryption function
-- [ ] Decryption function
+- [x] Encryption function
+- [x] Decryption function
+- [ ] Digital signature
 - [ ] Tie into I/O

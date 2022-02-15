@@ -43,7 +43,6 @@ def owner_user_action_handler(action: int) -> int:
     if action == 1:
         options = backend.get_available_messages()
         if len(options) > 0:
-            # validate user input
             print(backend.get_message(input("Enter your choice: ")))
 
     elif action == 2:

@@ -1,10 +1,10 @@
+from email import charset
 import utils
 
 message_queue = []
 signature_queue = []
 
 
-# TODO
 def encrypt(message: str, pub: int) -> str:
     (e, n) = pub
     cipher_values = []
@@ -13,11 +13,17 @@ def encrypt(message: str, pub: int) -> str:
         m = int(c)
         cipher_value = pow(m,e) % n
         cipher_values.append(cipher_value)
-    return message
-# TODO 
+
+    return cipher_values
+
 def decrypt(message: str, priv: int) -> str:
+    plain_values = []
     (d, n) = priv
-    return message
+    for m in message:
+        m = int(m)
+        c = pow(m, d) % n
+        plain_values.append(chr(c))
+    return "".join(plain_values)
 
 def generate_rsa_pair():
     (p, q) = utils.eratosthenes()
@@ -32,15 +38,17 @@ def generate_rsa_pair():
 def send_message(message: str):
     message_queue.append(encrypt(message, PUBLIC_KEY))
     print("Message encrypted and sent.")
+    print("".join(map(str, message_queue[len(message_queue) - 1])))
 
-# def get_available_messages() -> list(str):
-#     # not sure how we're going to store the length of the encrypted messages
-#     return ["{}. (length = {})".format(i, len(m)) for i, m in enumerate(message_queue)]
+def get_available_messages():
+    print('Messages available messages:')
+    for i, m in enumerate(message_queue):
+        cipher_string = "".join(map(str, m))
+        print("{}. {}".format(i + 1, cipher_string))
+    return ["{}. (length = {})".format(i, len(m)) for i, m in enumerate(message_queue)]
 
-# TODO probably need better error checking here
 def get_message(index: int) -> str:
-    # pop message queue (message_queue.pop(0))
-    if index < len(message_queue):
-        return message_queue[index]
+    if int(index) - 1 < len(message_queue):
+        print(decrypt(message_queue[int(index) - 1], PRIVATE_KEY))
     return None
 

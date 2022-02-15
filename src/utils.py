@@ -47,7 +47,11 @@ def mult_inv(e,r):
     gcd,s,_=eea(e,r)
     if(gcd!=1):
         return None
-    elif(s == 1):
+    else:
+        if(s<0):
+            print("....")
+        elif(s>0):
+            print("....")
         return s%r
 
 def get_encryption_key(n, r):

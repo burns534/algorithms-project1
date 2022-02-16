@@ -1,6 +1,5 @@
 
 import backend 
-import utils
 
 def get_user_type():
     print('Please select your user type:')
@@ -12,28 +11,23 @@ def get_user_type():
 def public_user_action():
     print('As a public user, what would you like to do?')
     print('\t1. Send an encrypted message')
-    print('\t2. Authenticate a digital signature')
-    print('\t3. Exit ')
+    print('\t2. Exit ')
     return input('Enter your choice: ')
 
 def owner_user_action():
     print('As the owner of the keys, what would you like to do?')
     print('\t1. Decrypt a received message')
-    print('\t2. Digitally sign a message')
-    print('\t3. Exit ')
+    print('\t2. Validate Signature')
+    print('\t3. Set Signature')
+    print('\t4. Exit ')
     return input('Enter your choice: ')
     
-    #hello from Migue
+    
 def public_user_action_handler(action: int) -> int:
     action = int(action)
     if action == 1:
         backend.send_message(input("Enter a message: "))
     elif action == 2:
-        signatures = backend.get_signatures()
-        if len(signatures) > 0:
-            print(backend.authenticate_signature(input("Enter your choice: ")))
-
-    elif action == 3:
         return 3
     else:
         print("Error: invalid input")
@@ -47,11 +41,13 @@ def owner_user_action_handler(action: int) -> int:
             print(backend.get_message(input("Enter your choice: ")))
 
     elif action == 2:
-        signatures = backend.get_signatures()
-        if len(signatures) > 0:
-            print(backend.authenticate_signature(input("Enter your choice: ")))
+        options = backend.get_available_decrypted_messages()
+        if len(options) > 0:
+            print(backend.validate_signature(input("Select message to validate: ")))
 
     elif action == 3:
+        backend.set_signature(input('Please enter signature: '))
+    elif action == 4:
         return 3
     else:
         print("Error: invalid input")

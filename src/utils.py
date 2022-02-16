@@ -95,3 +95,25 @@ def stringToAscii(text: str):
     for character in text:
         ascii_values.append("{}".format(ord(character)))
     return ascii_values
+
+def signature_cypher(signature: str, key: int):
+    signature = signature.upper()
+    alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    result = ""
+    for letter in signature:
+        if letter in alpha:
+            letter_index = (alpha.find(letter) + key) % len(alpha) 
+            result = result +alpha[letter_index]
+        else:
+            result = result + letter
+    return result
+
+def generated_signature():
+    generated_string = ''
+    for _ in range(10):
+        random_integer = random.randint(97, 97 + 26 - 1)
+        flip_bit = random.randint(0, 1)
+        random_integer = random_integer - 32 if flip_bit == 1 else random_integer
+        generated_string += (chr(random_integer))
+    
+    return generated_string.upper()

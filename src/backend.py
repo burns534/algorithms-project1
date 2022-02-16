@@ -1,12 +1,20 @@
-from email import charset, message
 import utils
-import datetime;
 
 message_queue = []
 decrypted_messages = []
 signature_queue = []
 owner_signature = utils.generated_signature()
 key = 5
+
+class Backend:
+    def __init__(self):
+        return
+    def encrypt_message(self, message):
+        message = message.upper()
+        result = "Decrypted message: "
+        for char in message:
+            
+
 
 # this probably all needs to be encapsulated in a class. I'm planning on doing that soon
 def encrypt(message: str, pub) -> str:

@@ -1,4 +1,3 @@
-from email import charset
 import utils
 
 message_queue = []

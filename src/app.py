@@ -1,5 +1,8 @@
 
 import backend 
+import sys
+
+exit_flag = False
 
 def get_user_type():
     print('Please select your user type:')
@@ -43,7 +46,10 @@ def owner_user_action_handler(action: int) -> int:
     elif action == 2:
         options = backend.get_available_decrypted_messages()
         if len(options) > 0:
-            print(backend.validate_signature(input("Select message to validate: ")))
+            while input("Select message to validate"):
+                print(backend.validate_signature(input("Select message to validate: ")))
+        else:
+            print("There are no signatures to authenticate.")
 
     elif action == 3:
         backend.set_signature(input('Please enter signature: '))
@@ -54,7 +60,8 @@ def owner_user_action_handler(action: int) -> int:
         return None
 
 def program():
-    while True:
+    
+    while not exit_flag:
         user_type = get_user_type()
 
         # prompt user for type
@@ -68,18 +75,15 @@ def program():
                 break
         
         # public user
-        if user_type == 1: 
-            action = public_user_action()
-            if public_user_action_handler(action) == 3:
-                return
+        if user_type == 1:
+            public_user()
         # owner user
         elif user_type == 2:
-            action = owner_user_action()
-            if owner_user_action_handler(action) == 3:
-                return
+            owner_user()
+
         elif user_type == 3:
-            print('exiting....')
-            return
+            print('Bye for now!')
+            sys.exit(0)
 
 if __name__ == "__main__":
     program()

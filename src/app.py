@@ -23,7 +23,7 @@ def owner_user_action():
     print('\t3. Exit ')
     return input('Enter your choice: ')
     
-    #hello from Miguel
+    #hello from Migue
 def public_user_action_handler(action: int) -> int:
     action = int(action)
     if action == 1:

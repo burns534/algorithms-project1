@@ -1,5 +1,6 @@
 
 import backend 
+import utils
 
 def get_user_type():
     print('Please select your user type:')
@@ -56,17 +57,19 @@ def owner_user_action_handler(action: int) -> int:
         print("Error: invalid input")
         return None
 
-
-
-
 def program():
     while True:
         user_type = get_user_type()
 
-        try:
-            user_type = int(user_type)
-        except ValueError:
-            program()
+        # prompt user for type
+        while True:
+            try:
+                user_type = int(user_type)
+            except ValueError:
+                print("Invalid input") # maybe 
+                continue
+            else:
+                break
         
         # public user
         if user_type == 1: 

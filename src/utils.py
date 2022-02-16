@@ -1,6 +1,29 @@
-import math
 import random;
+
+prime_list = []
+
+def random_prime(n):
+    global prime_list
+    """returns random prime less than n"""
+    return prime_list[random.randint(0, min(len(prime_list) - 1, n))]
+
+# use this at start of program so you don't have to run the sieve every time you want a prime number
+def generate_prime_list(n):
+    """populates prime list for primes less than n"""
+    global prime_list
+    prime_map = [True for _ in range(n + 1)]
+    p = 2
+    while (p * p <= n):
+        if (prime_map[p]):
+            for i in range(pow(p, 2), n + 1, p):
+                prime_map[i] = False
+        p += 1
+    prime_list = [i for i in range(2, n + 1) if prime_map[i]]
+
+
+# proposal to delete this - kyle
 def eratosthenes():
+    # we could use a bitmap for this but not sure if we're allowed to
     n = random.randint(1, 1000)
     prime = [True for i in range(n + 1)]
     p = 2
@@ -66,7 +89,8 @@ def get_encryption_key(n, r):
 def get_decryption_key (e, r):
     return mult_inv(e,r)
 
-def stringToAscii(text):
+# no longer need this, replaced by str.encode method
+def stringToAscii(text: str):
     ascii_values = []
     for character in text:
         ascii_values.append("{}".format(ord(character)))

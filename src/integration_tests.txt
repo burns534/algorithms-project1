@@ -76,3 +76,39 @@ digest: 3òøHä¤¹ÑºB
 test: b'3\xf2\x98+\xd0\xf8H\xe4\xa4\x00\x00\x00\xb9\xd1\xbaB'
 calculated digest: }HS×¹LÊ»%¶x×°[
 False
+
+
+
+Testing Signature - Invalid Signature Properly Detected
+--------------------------------------------------------
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 1
+As a public user, what would you like to do?
+        1. Send an encrypted message
+        2. Authenticate a digital signature
+        3. Exit
+Enter your choice: 1
+Enter a message: this is a regular unsigned message that should not be accepted as authenticated 
+As a public user, what would you like to do?
+        1. Send an encrypted message
+        2. Authenticate a digital signature
+        3. Exit
+Enter your choice: 2
+The following messages are available: 
+        1. (length = 128)
+Enter your choice: 1
+Signature is invalid.
+As a public user, what would you like to do?
+        1. Send an encrypted message
+        2. Authenticate a digital signature
+        3. Exit
+Enter your choice: 3
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 3
+Bye for now!

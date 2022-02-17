@@ -1,8 +1,7 @@
-
 from backend import Backend
 import sys
 
-backend = Backend()
+backend = Backend(block_bitwidth=1024, fermat_iterations=1, padding=32)
 
 def get_user_type():
     print('Please select your user type:')
@@ -40,12 +39,13 @@ def public_user():
             while True:
                 try:
                     selection = int(input("Enter your choice: "))
-                    is_valid = backend.validate_signature(selection)
+                    is_valid, message = backend.validate_signature(selection)
                     if is_valid == None:
                         print("error: invalid selection")
                         continue
                     elif is_valid == True:
                         print("Signature is valid.")
+                        print("Signed message: {}".format(message))
                         break
                     else:
                         print("Signature is invalid.")
@@ -81,7 +81,10 @@ def owner_user():
                     if message == None:
                         print("error: invalid selection")
                         continue
-                    else:
+                    else: 
+                        if not message.isascii(): # try to catch user decrypting a signed message directly
+                            # for now, program will just display the crazy unicode characters instead of stopping you
+                            print("Oops! It looks like you tried to decrypt a signed message! Here's the output")
                         print("Decrypted message: {}".format(message))
                         break
 

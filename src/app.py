@@ -1,7 +1,10 @@
 from backend import Backend
 import sys
 
-backend = Backend(block_bitwidth=1024, fermat_iterations=1, padding=32)
+# use rsa-1024 bit encryption with 32 bit padding
+# at 1024 bits, fermat liars are so rare that only 1 iteration for the fermat primality test is sufficient
+# to convince that p and q are prime. Here we'll do 2 just for fun
+backend = Backend(block_bitwidth=1024, fermat_iterations=2, padding=32)
 
 def get_user_type():
     print('Please select your user type:')

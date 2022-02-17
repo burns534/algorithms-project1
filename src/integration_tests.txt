@@ -112,3 +112,57 @@ Please select your user type:
         3. Exit program
 Enter your choice: 3
 Bye for now!
+
+
+Testing Signature - Attempting to decrypt signed message
+-------------------------------------------------------
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 2
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 2
+Enter a message: if I try to decrypt this signed message normally, the result will be very ugly 
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 1
+The following messages are available: 
+        1. (length = 256)
+Enter your choice: 1
+Oops! It looks like you tried to decrypt a signed message! Here's the output
+Decrypted message: $sæe0¥æE­Àí¡f=ÓEå2á<Ìy
+:8·ÑLsdá³ÕoKRóF@àöß¬ð<¹ÃìnÁ^"®ùoÎYÆg'ç[yJ]¼Ûdö¨à¹â¼Î}=B9U}b Y
+     Ì§"¹QþD^¾¹CE
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 3
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 3
+Bye for now!
+
+
+Excerpt from Testing Multiple, Long Messages
+--------------------------------
+Enter your choice: 2
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 1
+The following messages are available: 
+        1. (length = 896)
+        2. (length = 896)
+        3. (length = 896)
+        4. (length = 896)
+        5. (length = 896)

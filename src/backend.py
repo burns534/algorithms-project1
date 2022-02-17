@@ -1,6 +1,4 @@
 import random, math, hashlib
-from functools import reduce
-from tokenize import Intnumber
 
 class Backend:
     def __init__(self, block_bitwidth=256, fermat_iterations=1, padding=32):
@@ -44,6 +42,8 @@ class Backend:
             
     def rsa_keygen(self):
         while True:
+            # here we divide block_bitwidth by 2 so that when the numbers are multiplied we end up with
+            # n being approximately block_bitwidth bits in length
             p = self.generate_pseudoprime(self.block_bitwidth // 2, self.fermat_iterations)
             q = self.generate_pseudoprime(self.block_bitwidth // 2, self.fermat_iterations)
             n = p * q
@@ -75,8 +75,8 @@ class Backend:
     def decrypt_bytes(self, msg_bytes=None, d=None):
         if d == None:
             d = self.private_key
+
         padded_width = self.block_bitwidth // 8 
-        
         result = bytes()
         block_bytes = []
         # number of bytes is now evenly divisible by padded_width since it was used to generate the output from encryption stage
@@ -112,7 +112,7 @@ class Backend:
         return None, None
     
     def encrypt_signed_message(self, message):
-        # get hashed message as bytes
+        # get hashed message as bytes. MD5 hash is commonly used for RSA signatures
         digest = hashlib.md5(message.encode('ascii')).digest()
   
         """
@@ -137,12 +137,6 @@ class Backend:
     def get_encrypted_messages(self):
         return self.encrypted_messages
     
-    # def get_signed_message(self, index):
-    #     index -= 1
-    #     if index < len(self.encrypted_messages) and index >= 0:
-    #         return self.decrypt_signed_message(self.encrypted_messages.pop(index))
-    #     return None
-
     def get_message(self, index):
         index -= 1 # user choices indexed starting at 1
         if index < len(self.encrypted_messages) and index >= 0:

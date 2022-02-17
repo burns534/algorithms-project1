@@ -1,53 +1,21 @@
-import utils, random, math
-from sympy.ntheory import primerange
-
-            
-# this probably all needs to be encapsulated in a class. I'm planning on doing that soon
-# def encrypt(message: str, pub) -> str:
-#     (e, n) = pub
-#     cipher_values = []        
-#     for m in message.encode('ascii'):
-#         cipher_value = pow(m, e) % n
-#         cipher_values.append(cipher_value)
-#     return cipher_values
-
-# def decrypt(message: str, priv) -> str:
-#     plain_values = []
-#     (d, n) = priv
-#     for m in message:
-#         m = int(m)
-#         c = pow(m, d) % n
-#         plain_values.append(chr(c))
-#     return "".join(plain_values)
-
-# def generate_rsa_pair():
-#     (p, q) = (utils.random_prime(1000), utils.random_prime(1000)) # 1000???
-#     n = p * q
-#     phi_of_n = (p-1) * (q-1)
-#     e = utils.get_encryption_key(n, phi_of_n)
-#     d = utils.get_decryption_key(e, phi_of_n)
-#     return ((e, n), (d, n))
-
-# utils.generate_prime_list(1000) # must be called before random_prime is called
-# (PUBLIC_KEY, PRIVATE_KEY) = generate_rsa_pair()
+import random, math, hashlib, binascii
 
 class Backend:
-    def __init__(self, prime_range=100_000, block_width=256, fermat_iterations=1):
-        # self.prime_list = self.generate_prime_list(prime_range)
-        self.block_width = block_width
+    def __init__(self, block_bitwidth=256, fermat_iterations=1):
+        self.block_bitwidth = block_bitwidth
         self.fermat_iterations = fermat_iterations
-        (self.public_key, self.private_key) = self.rsa_keygen()
-
+        self.public_key, self.private_key, self.n = self.rsa_keygen()
         self.encrypted_messages = []
-        self.decrypted_messages = []
-        self.signatures = []
-        self.owner_signature = self.generated_signature()
-        self.key = 5
         return
-
-    def random_prime(self):
-        """Returns random prime from backend prime list"""
-        return self.prime_list[random.randint(0, len(self.prime_list) - 1)]
+    
+    def extended_gcd(self, a, b):
+        ''' The extended_gcd function implements the
+        extension of Euclid's GCD algorithm to find integers x and y
+        such that ax + by = gcd(a, b) '''
+        if b == 0:
+            return (1, 0, a)
+        (x, y, d) = self.extended_gcd(b, a % b)
+        return y, x - a // b * y, d
 
     def generate_public_key(self, phi):
         while True:
@@ -57,7 +25,7 @@ class Backend:
 
     def generate_private_key(self, pub, phi):
         # private key is multiplicative inverse of e in ring of phi
-        return utils.extended_gcd(pub, phi)[0] # return the x of 1 = e*x + phi*y, as it is our private key
+        return self.extended_gcd(pub, phi)[0] # return the x of 1 = e*x + phi*y, as it is our private key
 
     def fermat_test(self, p, k):
         for _ in range(k): # perform primality test k times
@@ -72,23 +40,27 @@ class Backend:
                 return candidate
             
     def rsa_keygen(self):
-        p = self.generate_pseudoprime(self.block_width, self.fermat_iterations)
-        q = self.generate_pseudoprime(self.block_width, self.fermat_iterations)
+        p = self.generate_pseudoprime(self.block_bitwidth // 2, self.fermat_iterations)
+        q = self.generate_pseudoprime(self.block_bitwidth // 2, self.fermat_iterations)
         n = p * q
         phi = (p - 1) * (q - 1)
         e = self.generate_public_key(phi)
-        return (e, n), (self.generate_private_key(e, phi), n)
+        return e, self.generate_private_key(e, phi), n
     
-    def encrypt_message(self, msg):
+    def encrypt_message(self, msg, e=None):
         print(len(msg))
         result = ""
-        e = self.public_key[0]
-        n = self.public_key[1]
-        print("n: {}".format(n))
-        print("n bitlength: {}".format(n.bit_length()))
-        threshold = self.block_width // 4 # this converts to bytes and then multiplies by 2 because n is approximately twice bitlength of p or q
+        if e == None:
+            e = self.public_key
+        # print("n: {}".format(self.n))
+        # print("n bitlength: {}".format(self.n.bit_length()))
+        threshold = self.block_bitwidth // 8 # this converts to bytes
         block_bytes = []
-        for byte in msg.upper().encode('ascii'):
+        print("encrypting message: {}".format(msg))
+        message_bytes = msg.upper().encode('raw_unicode_escape')
+        print("message bytes: {}".format(message_bytes))
+        result_bytes = []
+        for byte in msg.upper().encode('raw_unicode_escape'):
             block_bytes.append(byte)
             if len(block_bytes) == threshold:
                 # byte order doesn't really matter as long as it's the same when we decrypt, but big is the order of the block_bytes list
@@ -96,125 +68,179 @@ class Backend:
                 # and then 
                 # first convert to integer from bytes
                 # then encrypt integer with public key
-                # then convert encrypted integer to bytes (threshold bytes long. big enough to hold this because threshold has 2 * block_width bits and n = p * q, each of which are block_width in bit length)
+                # then convert encrypted integer to bytes (threshold bytes long. big enough to hold this because threshold has 2 * block_bitwidth bits and n = p * q, each of which are block_bitwidth in bit length)
                 # then decode to raw_unicode_escape string. This must be done because ascii only supports positive signed bytes and the bytes from the
                 # encrypted number can be anything 0-255. Regular unicode also doesn't work because of invalid byte sequences when encoding in the decrypt method
-                
-                # integer = int.from_bytes(block_bytes, byteorder='big')
-                # print("integer from bytes: {}".format(integer))
-                # print("integer length: {}".format(integer.bit_length()))
-                # cipher_integer = pow(integer, e, n)
-                # print("cipher integer: {}".format(cipher_integer))
-                # print("cipher integer length: {}".format(cipher_integer.bit_length()))
-                
-                result += pow(int.from_bytes(block_bytes, byteorder='big'), e, n).to_bytes(threshold, byteorder='big').decode("raw_unicode_escape") 
+                print("block_bytes: {}".format(block_bytes))
+                integer = int.from_bytes(block_bytes, byteorder='big')
+                print("integer from bytes: {}".format(integer))
+                print("integer length: {}".format(integer.bit_length()))
+                cipher_integer = pow(integer, e, self.n)
+                print("cipher integer: {}".format(cipher_integer))
+                print("cipher integer length: {}".format(cipher_integer.bit_length()))
+                cipher_bytes = cipher_integer.to_bytes(threshold, byteorder='big')
+                print("cipher_bytes: {}".format(cipher_bytes))
+                # cipher_text = cipher_bytes.decode('raw_unicode_escape')
+                # print("cipher_text: {}".format(cipher_text))
+                result_bytes.append(cipher_bytes)
+                # result += pow(int.from_bytes(block_bytes, byteorder='big'), e, self.n).to_bytes(threshold, byteorder='big').decode("raw_unicode_escape") 
 
                 # clear the block and start over
                 block_bytes.clear()
         if len(block_bytes) > 0:
+            print("block_bytes: {}".format(block_bytes))
             # must pad the bytes so we can decrypt properly
             # pad at the front of the bytearray since we know length here and decryption function won't
             # otherwise, the decryption function would be complicated and have to shift afterwards
             padded_bytes = ([0] * (threshold - len(block_bytes)))
             padded_bytes.extend(block_bytes)
 
-            # print(block_bytes)
+            print("padded_bytes: {}".format(padded_bytes))
             
-            # integer = int.from_bytes(padded_bytes, byteorder='big')
-            # print("integer from bytes: {}".format(integer))
-            # print("integer length: {}".format(integer.bit_length()))
-            # cipher_integer = pow(integer, e, n)
-            # print("cipher integer: {}".format(cipher_integer))
-            
-            # print("cipher integer length: {}".format(cipher_integer.bit_length()))
-            # cipher_bytes = cipher_integer.to_bytes(threshold, byteorder='big')
-            # print("cipher bytes: {}".format(cipher_bytes))
+            print("block_bytes: {}".format(block_bytes))
+            integer = int.from_bytes(block_bytes, byteorder='big')
+            print("integer from bytes: {}".format(integer))
+            print("integer length: {}".format(integer.bit_length()))
+            cipher_integer = pow(integer, e, self.n)
+            print("cipher integer: {}".format(cipher_integer))
+            print("cipher integer length: {}".format(cipher_integer.bit_length()))
+            cipher_bytes = cipher_integer.to_bytes(threshold, byteorder='big')
+            print("cipher_bytes: {}".format(cipher_bytes))
 
-            result += pow(int.from_bytes(padded_bytes, byteorder='big'), e, n).to_bytes(threshold, byteorder='big').decode("raw_unicode_escape") 
+            result_bytes.append(cipher_bytes)
+
+            # result += pow(int.from_bytes(padded_bytes, byteorder='big'), e, self.n).to_bytes(threshold, byteorder='big').decode("raw_unicode_escape") 
+        
+        
+        print("full cipher bytes: {}".format(result_bytes))
+
+        d = self.private_key
+
+        new_cipher_bytes = []
+
+        plaintext_result = ""
+    
+    
+        print("message bytes: {}".format(result_bytes))
+        for byte in result_bytes:
+            # print("new_cipher_bytes: {}".format(new_cipher_bytes))
+            # new_cipher_integer = int.from_bytes(new_cipher_bytes, byteorder='big')
+            new_cipher_integer = int.from_bytes(byte, byteorder='big')
+            print("new_cipher_integer: {}".format(new_cipher_integer))
+            new_integer = pow(new_cipher_integer, d, self.n)
+            print("new_integer: {}".format(new_integer))
+            new_message_bytes = new_integer.to_bytes(threshold, byteorder='big')
+            print("new_message_bytes: {}".format(new_message_bytes))
+            plaintext = new_message_bytes.decode('raw_unicode_escape')
+            print("plaintext: {}".format(plaintext))
+            
+            plaintext_result += plaintext
+        
         return result
 
-    def decrypt_message(self, msg):
+    def decrypt_message(self, msg, d=None):
         result = ""
-        d = self.private_key[0]
-        n = self.private_key[1]
-        threshold = self.block_width // 4 # this converts to bytes and then multiplies by 2 because n is approximately twice bitlength of p or q
+        if d == None:
+            d = self.private_key
+        threshold = self.block_bitwidth // 4 # this converts to bytes and then multiplies by 2 because n is approximately twice bitlength of p or q
         block_bytes = []
         for byte in msg.encode("raw_unicode_escape"):
             block_bytes.append(byte)
             if len(block_bytes) == threshold:
                 # just undoing the encryption process almost exactly the same
-                result += pow(int.from_bytes(block_bytes, byteorder='big'), d, n).to_bytes(threshold, byteorder='big').decode('ascii')
+                result += pow(int.from_bytes(block_bytes, byteorder='big'), d, self.n).to_bytes(threshold, byteorder='big').decode('raw_unicode_escape')
                 block_bytes.clear()
         return result
 
-    def signature_cypher(self, signature: str, key: int):
-        signature = signature.upper()
-        alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        result = ""
-        for letter in signature:
-            if letter in alpha:
-                letter_index = (alpha.find(letter) + key) % len(alpha) 
-                result = result +alpha[letter_index]
-            else:
-                result = result + letter
-        return result
+    # def validate_signature(self, index: int):
+    #     message = self.decrypted_messages[int(index) -1]
+    #     hashed_header = message.split('#')[0]
+    #     if (self.signature_cypher(hashed_header, -5) == self.owner_signature):
+    #         return True
+    #     else:
+    #         return False
 
-    def generated_signature(self):
-        generated_string = ''
-        for _ in range(10):
-            random_integer = random.randint(97, 97 + 26 - 1)
-            flip_bit = random.randint(0, 1)
-            random_integer = random_integer - 32 if flip_bit == 1 else random_integer
-            generated_string += (chr(random_integer))
-        
-        return generated_string.upper()
-    
-    def get_signature(self):
-        hashed_signature = self.signature_cypher(self.owner_signature, self.key)
-        return hashed_signature 
-
-    def set_signature(self, signature: str):
-        owner_signature = signature.upper()
-        return owner_signature
-
-    def validate_signature(self, index: int):
-        message = self.decrypted_messages[int(index) -1]
-        hashed_header = message.split('#')[0]
-        if (self.signature_cypher(hashed_header, -5) == self.owner_signature):
+    def validate_signature(self, index):
+        print("validate signature")
+        index -= 1
+        if index < len(self.encrypted_messages) and index >= 0:
+            # first decrypt the encrypted container message with private key
+            message = self.decrypt_message(self.encrypted_messages.pop(index))
+            print(message)
+            # now gather the hash from the end of the message. md5 digest is 32 chars long
+            hash_string = message[-32:]
+            print(len(hash_string))
+            print("Hash string: {}".format(hash_string))
+            # now decrypt the encapsulated message with the public key to authenticate
+            inner_message = self.decrypt_message(message, self.public_key)
+            print(inner_message)
             return True
-        else:
-            return False
+        return None
     
-    def send_message(self, message: str):
-        hashed_header = self.get_signature()
-        self.encrypted_messages.append(self.encrypt_message(hashed_header + '# ' + message))    
-        print("Message encrypted and sent.")
-        print("".join(map(str, self.encrypted_messages[len(self.encrypted_messages) - 1])))
+    def encrypt_signed_message(self, message):
+        hash_string = hashlib.md5(message.encode('raw_unicode_escape')).hexdigest()
+        print("Hash string: {}".format(hash_string))
+        # return self.encrypt_message(self.encrypt_message(message + hash_string, self.private_key) + hash_string)
+        return self.encrypt_message(message + hash_string)
 
-    def get_available_messages(self):
-        print('Available messages:')
-        for i, m in enumerate(self.encrypted_messages):
-            cipher_string = "".join(map(str, m))
-            print("{}. {}".format(i + 1, cipher_string))
-        return '\n'.join(["{}. (length = {})".format(i, len(m)) for i, m in enumerate(self.encrypted_messages)])
-        
-    def get_available_decrypted_messages(self):
-        print('Available messages:')
-        for i, m in enumerate(self.decrypted_messages):
-            cipher_string = "".join(map(str, m))
-            print("{}. {}".format(i + 1, cipher_string))
-        return '\n'.join(["{}. (length = {})".format(i, len(m)) for i, m in enumerate(self.decrypted_messages)])
+    def send_message(self, message):
+        self.encrypted_messages.append(self.encrypt_message(message))
+    
+    def send_signed_message(self, message):
+        self.encrypted_messages.append(self.encrypt_signed_message(message))
+
+    def get_encrypted_messages(self):
+        return self.encrypted_messages
+    
+    # def get_signed_message(self, index):
+    #     index -= 1
+    #     if index < len(self.encrypted_messages) and index >= 0:
+    #         return self.decrypt_signed_message(self.encrypted_messages.pop(index))
+    #     return None
 
     def get_message(self, index):
-        if index - 1 < len(self.encrypted_messages):
-            decrypted_message = self.decrypt_message(self.encrypted_messages[index - 1])
-            self.decrypted_messages.append(decrypted_message)
-            print(decrypted_message)
+        index -= 1 # user choices indexed starting at 1
+        if index < len(self.encrypted_messages) and index >= 0:
+            return self.decrypt_message(self.encrypted_messages.pop(index))
+        return None
+    
+    # def get_available_messages(self):
+    #     for i, m in enumerate(self.encrypted_messages):
+    #         cipher_string = "".join(map(str, m))
+    #         print("{}. {}".format(i + 1, cipher_string))
+    #     return '\n'.join(["{}. (length = {})".format(i, len(m)) for i, m in enumerate(self.encrypted_messages)])
+        
+    # def get_available_decrypted_messages(self):
+    #     print('Available messages:')
+    #     for i, m in enumerate(self.decrypted_messages):
+    #         cipher_string = "".join(map(str, m))
+    #         print("{}. {}".format(i + 1, cipher_string))
+    #     return '\n'.join(["{}. (length = {})".format(i, len(m)) for i, m in enumerate(self.decrypted_messages)])
+
 
  
 if __name__ == "__main__":
-    backend = Backend()
+    backend = Backend(block_bitwidth=64)
+    
     # ciphertext = backend.encrypt_message("""All along I had been living by the mantra suffer now, enjoy later. I finally realized if I really was supposed to be a doctor I wouldn't be suffering through the process and constantly questioning it. I didn't want to risk selling so much of my life for something I chose based on two minutes of skimming the internet and pressure from teachers and family.""")
-    ciphertext = backend.encrypt_message("012345678901234567890123456789012345678912345678901234567890123")
-    # print(ciphertext)
-    print(backend.decrypt_message(ciphertext))
+    # ciphertext = backend.encrypt_message("this is a test")
+    # # print(ciphertext)
+    # print(backend.decrypt_message(ciphertext))
+
+    backend.encrypt_message("0123456789")
+
+    # hash_string = hashlib.md5("hellooooo".encode('raw_unicode_escape')).hexdigest()
+    # print(hash_string)
+    # # print(len(hash_string))
+
+    # message = "topSecret"
+
+    # encrypted_message = backend.encrypt_message(message + hash_string)
+    # print(backend.decrypt_message(encrypted_message))
+
+    # b = binascii.b2a_hex("hello world".upper().encode('raw_unicode_escape'))
+    # print(binascii.a2b_hex(b))
+    # backend.encrypt_message("topSecret")
+
+    # backend.send_signed_message("mySignature")
+    # backend.validate_signature(1)

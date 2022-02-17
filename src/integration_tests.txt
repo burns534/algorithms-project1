@@ -1,0 +1,58 @@
+Signature debugging
+--------------------------------------
+14
+n: 110344682122297703000487407270560122691
+n bitlength: 127
+THIS IS A TEST
+7b39727136e4dc97158ca440dcc0c184
+32
+
+
+Integration test of basic message encryption/decryption
+---------------------------------------
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 1
+As a public user, what would you like to do?
+        1. Send an encrypted message
+        2. Authenticate a digital signature
+        3. Exit
+Enter your choice: 1
+Enter a message: topSecret
+9
+n: 739630114325372784873194766850669819495661212059989989897612403225366491077606902890244885648788136752481693080734740991477309603586642896940988176353289
+n bitlength: 508
+As a public user, what would you like to do?
+        1. Send an encrypted message
+        2. Authenticate a digital signature
+        3. Exit
+Enter your choice: 3
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 2
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 1
+The following messages are available: 
+        1. (length = 64)
+Enter your choice: 1
+Decrypted message: TOPSECRET
+As the owner of the keys, what would you like to do?
+        1. Decrypt a received message
+        2. Digitally sign a message
+        3. Exit
+Enter your choice: 3
+Please select your user type:
+        1. A public user
+        2. The owner of the keys
+        3. Exit program
+Enter your choice: 3
+Bye for now!
+
+

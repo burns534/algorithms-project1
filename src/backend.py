@@ -54,24 +54,17 @@ class Backend:
             e = self.generate_public_key(phi)
             return e, self.generate_private_key(e, phi), n
 
-    def encrypt_message(self, msg=None, msg_bytes=None, e=None):
+    def encrypt_bytes(self, msg_bytes=None, e=None):
         # allows for encryption with private key as well
         source = None
         if e == None:
             e = self.public_key
-        # so we can encrypt bytes or string
-        if msg == None and msg_bytes == None:
-            return ""
-        if msg_bytes != None:
-            source = msg_bytes
-        else:
-            source = msg.encode('raw_unicode_escape')
 
         threshold = (self.block_bitwidth - self.padding) // 8 
         padded_width = self.block_bitwidth // 8
         block_bytes = []
         result = bytes()
-        for byte in source:
+        for byte in msg_bytes:
             block_bytes.append(byte)
             if len(block_bytes) == threshold:
                 result += pow(int.from_bytes(block_bytes, byteorder='big'), e, self.n).to_bytes(padded_width, byteorder='big')
@@ -81,32 +74,33 @@ class Backend:
         
         return result
 
-    def decrypt_message(self, msg_bytes=None, msg=None, d=None):
+    def decrypt_bytes(self, msg_bytes=None, d=None):
         if d == None:
             d = self.private_key
-        threshold = (self.block_bitwidth - self.padding) // 8  # this converts to bytes
-        padded_width = self.block_bitwidth // 8 # this is the number of bytes the encrypted text blocks are padded by
+        padded_width = self.block_bitwidth // 8 
         
-        # so we can decrypt bytes or string
-        if msg == None and msg_bytes == None:
-            return ""
-        if msg_bytes != None:
-            source = msg_bytes
-        else:
-            source = msg.encode('raw_unicode_escape')
-
-        
-        result = ""
+        result = bytes()
         block_bytes = []
         # number of bytes is now evenly divisible by padded_width since it was used to generate the output from encryption stage
         # therefore, no block_bytes will be empty at the end of the for loop unlike in the encryption stage
-        for byte in source:
+        for byte in msg_bytes:
             block_bytes.append(byte)
             if len(block_bytes) == padded_width:
-                # essentially just encryption backwards
-                result += pow(int.from_bytes(block_bytes, byteorder='big'), d, self.n).to_bytes(threshold, byteorder='big').decode('raw_unicode_escape')
+                # convert padded blocks to integer and decrypt
+                integer = pow(int.from_bytes(block_bytes, byteorder='big'), d, self.n)
+                # now convert the integer to bytes with no zero padding
+                # plus 7 guarantees the floor division returns the correct number of bytes to represent the integer
+                # otherwise something like 0000 0001 with a bit length of 1 would give 0 when divided by 8
+                result += integer.to_bytes((integer.bit_length() + 7) // 8, byteorder='big')
                 block_bytes.clear()
         return result
+
+    
+    def encrypt_message(self, message, e=None):
+        return self.encrypt_bytes(message.encode('raw_unicode_escape'), e).decode('raw_unicode_escape')
+    
+    # def decrypt_message(self, message):
+    #     return self.decrypt_bytes(message.encode('raw_unicode_escape')).decode('raw_unicode_escape')
 
     
     def validate_signature(self, index):
@@ -114,18 +108,17 @@ class Backend:
         index -= 1
         if index < len(self.encrypted_messages) and index >= 0:
             # first decrypt the encrypted outer message with private key
-            inner_message = self.decrypt_message(self.encrypted_messages.pop(index))
+            outer_message = self.decrypt_bytes(self.encrypted_messages.pop(index))
+            print("outer: {}".format(outer_message))
+            print("length: {}".format(len(outer_message)))
 
-            print("length: {}".format(len(inner_message)))
-            # now gather the hash from the end of the message. md5 digest is 32 chars long
-            digest = inner_message[-16:]
+            # now gather the hash from the end of the message. md5 digest is 16 bytes long
+            digest = outer_message[-16:]
             print("digest: {}".format(digest))
-            print("test: {}".format(digest.encode('raw_unicode_escape')))
             # now decrypt the encapsulated message with the public key
-            plaintext = self.decrypt_message(msg=inner_message[:-16], d=self.public_key)
+            plaintext = self.decrypt_bytes(outer_message[:-16], self.public_key)
             # now calculate digest of inner message to compare to digest from outer message
-            print("calculated digest: {}".format(hashlib.md5(plaintext.encode('ascii')).digest().decode('raw_unicode_escape')))
-            if digest == hashlib.md5(plaintext.encode('ascii')).digest().decode('raw_unicode_escape'):
+            if digest == hashlib.md5(plaintext).digest():
                 return True
             return False
         return None
@@ -133,14 +126,14 @@ class Backend:
     def encrypt_signed_message(self, message):
         # get hashed message as bytes
         digest = hashlib.md5(message.encode('ascii')).digest()
-        print("digest: {}".format(digest))
-        inner_message = self.encrypt_message(msg=message, e=self.private_key)
-        print("length: {}".format(len(inner_message)))
+        print("first digest: {}".format(digest)) # print digest in bytes form
+        inner_message = self.encrypt_bytes(message.encode('raw_unicode_escape'), self.private_key)
+        # print("length: {}".format(len(inner_message)))
 
-        outer_message = self.encrypt_message(msg_bytes=inner_message + digest)
-        decrypted_outer = self.decrypt_message(msg_bytes=outer_message)
+        print("outer first: {}".format(inner_message + digest))
+        # decrypted_outer = self.decrypt_message(msg_bytes=outer_message)
 
-        return self.encrypt_message(msg_bytes=self.encrypt_message(msg=message, e=self.private_key) + digest)
+        return self.encrypt_bytes(self.encrypt_bytes(message.encode('raw_unicode_escape'), self.private_key) + digest)
         # print("Hash string: {}".format(digest))
         # inner_message = self.encrypt_message(msg_bytes=message.encode('ascii') + digest, e=self.private_key)
         # print("inner message: {}".format(inner_message))

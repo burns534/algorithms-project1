@@ -56,3 +56,23 @@ Enter your choice: 3
 Bye for now!
 
 
+Signature debugging
+-----------------------------------
+digest: b'xx\xe43\xf2\x98+\xd0\xf8H\xe4\xa4\xb9\xd1\xbaB'
+validate signature
+digest: 3òøHä¤¹ÑºB
+Traceback (most recent call last):
+  File "/Users/kyle/Documents/Programming/algorithms/algorithms-project1/src/backend.py", line 365, in <module>
+    print(backend.validate_signature(1))
+  File "/Users/kyle/Documents/Programming/algorithms/algorithms-project1/src/backend.py", line 280, in validate_signature
+    print("test: {}".format(digest.encode('ascii')))
+UnicodeEncodeError: 'ascii' codec can't encode characters in position 1-2: ordinal not in range(128)
+
+Signature debugging - problem calculating digest on recieving end
+--------------------------------
+digest: b'xx\xe43\xf2\x98+\xd0\xf8H\xe4\xa4\xb9\xd1\xbaB'
+validate signature
+digest: 3òøHä¤¹ÑºB
+test: b'3\xf2\x98+\xd0\xf8H\xe4\xa4\x00\x00\x00\xb9\xd1\xbaB'
+calculated digest: }HS×¹LÊ»%¶x×°[
+False

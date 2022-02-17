@@ -1,5 +1,6 @@
 import random, math, hashlib
 from functools import reduce
+from tokenize import Intnumber
 
 class Backend:
     def __init__(self, block_bitwidth=256, fermat_iterations=1, padding=32):
@@ -107,6 +108,7 @@ class Backend:
                 block_bytes.clear()
         return result
 
+    
     def validate_signature(self, index):
         print("validate signature")
         index -= 1
@@ -114,10 +116,11 @@ class Backend:
             # first decrypt the encrypted outer message with private key
             inner_message = self.decrypt_message(self.encrypted_messages.pop(index))
 
+            print("length: {}".format(len(inner_message)))
             # now gather the hash from the end of the message. md5 digest is 32 chars long
             digest = inner_message[-16:]
             print("digest: {}".format(digest))
-            print("test: {}".format(digest.encode('ascii')))
+            print("test: {}".format(digest.encode('raw_unicode_escape')))
             # now decrypt the encapsulated message with the public key
             plaintext = self.decrypt_message(msg=inner_message[:-16], d=self.public_key)
             # now calculate digest of inner message to compare to digest from outer message
@@ -132,6 +135,8 @@ class Backend:
         digest = hashlib.md5(message.encode('ascii')).digest()
         print("digest: {}".format(digest))
         inner_message = self.encrypt_message(msg=message, e=self.private_key)
+        print("length: {}".format(len(inner_message)))
+
         outer_message = self.encrypt_message(msg_bytes=inner_message + digest)
         decrypted_outer = self.decrypt_message(msg_bytes=outer_message)
 
@@ -146,6 +151,47 @@ class Backend:
         # print("fully decrypted: {}".format(self.decrypt_message(msg=self.decrypt_message(msg_bytes=outer_message), d=self.public_key)))
         # return self.encrypt_message(self.encrypt_message(message + diges, self.private_key) + hash_string)
         # return self.encrypt_message(message + hash_string)
+
+
+    # def validate_signature(self, index):
+    #     print("validate signature")
+    #     index -= 1
+    #     if index < len(self.encrypted_messages) and index >= 0:
+    #         # first decrypt the encrypted outer message with private key
+    #         inner_message = self.decrypt_message(self.encrypted_messages.pop(index))
+
+    #         # now gather the hash from the end of the message. md5 digest is 32 chars long
+    #         digest = inner_message[-16:]
+    #         print("digest: {}".format(digest))
+    #         print("test: {}".format(digest.encode('ascii')))
+    #         # now decrypt the encapsulated message with the public key
+    #         plaintext = self.decrypt_message(msg=inner_message[:-16], d=self.public_key)
+    #         # now calculate digest of inner message to compare to digest from outer message
+    #         print("calculated digest: {}".format(hashlib.md5(plaintext.encode('ascii')).digest().decode('raw_unicode_escape')))
+    #         if digest == hashlib.md5(plaintext.encode('ascii')).digest().decode('raw_unicode_escape'):
+    #             return True
+    #         return False
+    #     return None
+    
+    # def encrypt_signed_message(self, message):
+    #     # get hashed message as bytes
+    #     digest = hashlib.md5(message.encode('ascii')).digest()
+    #     print("digest: {}".format(digest))
+    #     inner_message = self.encrypt_message(msg=message, e=self.private_key)
+    #     outer_message = self.encrypt_message(msg_bytes=inner_message + digest)
+    #     decrypted_outer = self.decrypt_message(msg_bytes=outer_message)
+
+    #     return self.encrypt_message(msg_bytes=self.encrypt_message(msg=message, e=self.private_key) + digest)
+    #     # print("Hash string: {}".format(digest))
+    #     # inner_message = self.encrypt_message(msg_bytes=message.encode('ascii') + digest, e=self.private_key)
+    #     # print("inner message: {}".format(inner_message))
+    #     # print("decrypted inner message: {}".format(self.decrypt_message(msg_bytes=inner_message, d=self.public_key)))
+    #     # outer_message = self.encrypt_message(msg_bytes=inner_message + digest)
+    #     # print("outer message: {}".format(outer_message))
+    #     # print("decrypted outer message: {}".format(self.decrypt_message(msg_bytes=outer_message)))
+    #     # print("fully decrypted: {}".format(self.decrypt_message(msg=self.decrypt_message(msg_bytes=outer_message), d=self.public_key)))
+    #     # return self.encrypt_message(self.encrypt_message(message + diges, self.private_key) + hash_string)
+    #     # return self.encrypt_message(message + hash_string)
 
     def send_message(self, message):
         self.encrypted_messages.append(self.encrypt_message(message))

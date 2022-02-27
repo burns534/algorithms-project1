@@ -6,5 +6,5 @@
 - [x] Key generation function
 - [x] Encryption function
 - [x] Decryption function
-- [ ] Digital signature
-- [ ] Tie into I/O
+- [x] Digital signature
+- [x] Tie into I/O
